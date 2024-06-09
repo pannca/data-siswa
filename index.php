@@ -1,187 +1,110 @@
 <?php
 session_start();
 
-// Inisialisasi session jika belum ada
-if (!isset($_SESSION['siswa'])) {
-    $_SESSION['siswa'] = array();
-}
-
-// Proses tambah data siswa
-if (isset($_POST['tambah'])) {
-    $nama = $_POST['nama'];
-    $nis = $_POST['nis'];
-    $rayon = $_POST['rayon'];
-
-    $data = array(
-        'nama' => $nama,
-        'nis' => $nis,
-        'rayon' => $rayon
-    );
-
-    // nambahin data ke session
-    array_push($_SESSION['siswa'], $data);
-
-    // Kembalikan data yang ditambahkan sebagai JSON
-    echo json_encode($data);
-    exit;
-}
-
-// Proses hapus semua data siswa
 if (isset($_POST['hapus'])) {
-    // Lakukan aksi menghapus semua data siswa
-    unset($_SESSION['siswa']);
-    echo json_encode(["status" => "all_deleted"]);
-    exit;
-}
-
-// Proses ngehapus data siswa individu
-if (isset($_POST['hapus_individu'])) {
-    $index = $_POST['hapus_individu'];
-    if (isset($_SESSION['siswa'][$index])) {
-        unset($_SESSION['siswa'][$index]);
-        $_SESSION['siswa'] = array_values($_SESSION['siswa']); // Re-index array
+    if (isset($_POST['hapus_key'])) {
+        $key = $_POST['hapus_key']; // Mengambil kunci dari form
+        unset($_SESSION['dataSiswa'][$key]); // Menghapus data sesuai kunci
+        header('Location: ' . $_SERVER['PHP_SELF']); // Redirect kembali ke halaman ini setelah penghapusan
+        exit();
     }
-    echo json_encode(["status" => "deleted"]);
-    exit;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Data Siswa</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        @media print {
+            .form-container {
+                display: none;
+            }
+        }
+    </style>
 </head>
-
 <body>
     <div class="container mt-5">
-        <h1><center>Data Siswa</center></h1>
-        <form id="siswaForm">
-            <div class="form-group">
-                <label for="nama">Nama</label>
-                <input type="text" class="form-control" id="nama" name="nama" required>
-            </div>
-            <div class="form-group">
-                <label for="nis">NIS</label>
-                <input type="number" class="form-control" id="nis" name="nis" required>
-            </div>
-            <div class="form-group">
-                <label for="rayon">Rayon</label>
-                <input type="text" class="form-control" id="rayon" name="rayon" required>
-            </div>
-            <button type="submit" class="btn btn-outline-primary">Tambah</button>
-            <button type="button" class="btn btn-outline-success" id="printData">Cetak</button>
-            <button type="button" class="btn btn-outline-danger" id="hapusSemua">Hapus Semua</button>
-        </form>
+        <h1 class="text-center">Data Siswa</h1>
 
-        <h3 class="mt-5">Data Siswa</h3>
-        <table class="table table-bordered mt-3" id="siswaTable">
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>NIS</th>
-                    <th>Rayon</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (isset($_SESSION['siswa']) && !empty($_SESSION['siswa'])): ?>
-                    <?php foreach ($_SESSION['siswa'] as $index => $siswa): ?>
-                        <tr>
-                            <td><?php echo $siswa['nama']; ?></td>
-                            <td><?php echo $siswa['nis']; ?></td>
-                            <td><?php echo $siswa['rayon']; ?></td>
-                            <td>
-                                <button class="btn btn-danger btn-sm hapusIndividu" data-index="<?php echo $index; ?>">Hapus</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+        <div class="form-container mt-4">
+            <form action="" method="post">
+                <div class="mb-3">
+                    <label for="nama" class="form-label">Nama:</label>
+                    <input type="text" name="nama" id="nama" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="nis" class="form-label">NIS:</label>
+                    <input type="number" name="nis" id="nis" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="rayon" class="form-label">Rayon:</label>
+                    <input type="text" name="rayon" id="rayon" class="form-control">
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" name="tmb" class="btn btn-primary">Tambah</button>
+                    <button type="button" name="cetak" onclick="window.print()" class="btn btn-secondary">Cetak</button>
+                </div>
+            </form>
+        </div>
 
-    <script>
-        document.getElementById('siswaForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            var formData = new FormData(this);
-            formData.append('tambah', true);
-
-            fetch('', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                var table = document.getElementById('siswaTable').getElementsByTagName('tbody')[0];
-                var newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td>${data.nama}</td>
-                    <td>${data.nis}</td>
-                    <td>${data.rayon}</td>
-                    <td>
-                        <button class="btn btn-danger btn-sm hapusIndividu" data-index="${table.rows.length - 1}">Delete</button>
-                    </td>
-                `;
-                document.getElementById('siswaForm').reset();
-                attachDeleteEvent();
-            })
-            .catch(error => console.error('Error:', error));
-        });
-
-        document.getElementById('hapusSemua').addEventListener('click', function() {
-            fetch('', {
-                method: 'POST',
-                body: new URLSearchParams('hapus=true')
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "all_deleted") {
-                    var tableBody = document.getElementById('siswaTable').getElementsByTagName('tbody')[0];
-                    tableBody.innerHTML = '';
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
-
-        document.getElementById('printData').addEventListener('click', function() {
-            var printContent = document.getElementById('siswaTable').outerHTML;
-            var originalContent = document.body.innerHTML;
-
-            document.body.innerHTML = '<table class="table table-bordered">' + printContent + '</table>';
-            window.print();
-            document.body.innerHTML = originalContent;
-
-            attachDeleteEvent();
-        });
-
-        function attachDeleteEvent() {
-            var deleteButtons = document.querySelectorAll('.hapusIndividu');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    var index = this.getAttribute('data-index');
-                    fetch('', {
-                        method: 'POST',
-                        body: new URLSearchParams('hapus_individu=' + index)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === "deleted") {
-                            this.closest('tr').remove();
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                });
-            });
+        <h2 class="mt-4">Daftar Siswa</h2>
+        <div class="siswa-list mt-3">
+        <?php
+        if (!isset($_SESSION['dataSiswa'])) {
+            $_SESSION['dataSiswa'] = array();
         }
 
-        // Lampiran awal untuk tombol yang ada
-        attachDeleteEvent();
-    </script>
+        if (isset($_POST['tmb'])) {
+            if ($_POST["nama"] == "" || $_POST["nis"] == "" || $_POST['rayon'] == "") {
+                echo "<div class='alert alert-warning'>Data kosong</div>";
+            } else {
+                $siswa = array(
+                    "nama" => $_POST['nama'],
+                    "nis" => $_POST['nis'],
+                    "rayon" => $_POST['rayon']
+                );
+                $sama = false;
+                foreach ($_SESSION['dataSiswa'] as $ds) {
+                    if ($ds['nama'] == $siswa['nama'] && $ds['nis'] == $siswa['nis'] && $ds['rayon'] == $siswa['rayon']) {
+                        $sama = true;
+                        break;
+                    }
+                }
+                if ($sama) {
+                    echo "<div class='alert alert-danger'>Data ini sudah ada, tulis data lain</div>";
+                } else {
+                    array_push($_SESSION['dataSiswa'], $siswa);
+                    echo "<div class='alert alert-success'>Data berhasil ditambahkan</div>";
+                }
+            }
+        }
+        ?>
+        <?php if (!empty($_SESSION['dataSiswa'])): ?>
+            <?php foreach ($_SESSION['dataSiswa'] as $key => $value): ?>
+                <div class="card mb-3">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><?php echo htmlspecialchars($value['nama']); ?> - <?php echo htmlspecialchars($value['nis']); ?> - <?php echo htmlspecialchars($value['rayon']); ?></p>
+                        <div>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="hapus_key" value="<?php echo $key; ?>">
+                                <button type="submit" name="hapus" class="btn btn-danger btn-sm">Hapus</button>
+                            </form>
+                            <form method="get" action="edit.php" style="display:inline;">
+                                <input type="hidden" name="key" value="<?php echo $key; ?>">
+                                <button type="submit" class="btn btn-warning btn-sm">Ubah</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p class="text-muted">Tidak ada data siswa.</p>
+        <?php endif; ?>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
-
 </html>
